@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>價錢牌讀取遊戲</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f5f5f5;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #priceCard {
+            font-size: 28px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin: 25px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #status {
+            margin: 20px 0;
+            min-height: 24px;
+            color: #666;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #userInput {
+            color: #388E3C;
+            background: #e8f5e9;
+        }
+        #correctAnswer {
+            color: #1976D2;
+            background: #e3f2fd;
+        }
+        .ios-permission {
+            background: #fff8e1;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>價錢牌讀取遊戲</h1>
+    
+    <div id="iosPermission" class="ios-permission" style="display:none;">
+        <h3>⚠️ 需要麥克風權限</h3>
+        <p>請先點擊下方按鈕允許麥克風訪問：</p>
+        <button id="enableMicBtn">允許麥克風</button>
+        <p><small>(iOS用戶需在彈出窗口中點擊「允許」)</small></p>
+    </div>
+    
+    <div id="priceCard">$0.00</div>
+    
+    <button id="startBtn" style="display:none;">開始聽取</button>
+    <button id="nextBtn">下一張</button>
+    
+    <div id="status">準備開始遊戲...</div>
+    
+    <div class="result" id="userInput">您讀的內容：--</div>
+    <div class="result" id="correctAnswer">正確答案：--</div>
+
+    <script>
+        // 核心變量
+        let recognition;
+        let currentPrice = 0;
+        let expectedText = '';
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        // 初始化遊戲
+        function initGame() {
+            // iOS特殊處理
+            if (isIOS) {
+                handleIOSPermission();
+            } else {
+                initSpeechRecognition();
+                document.getElementById('startBtn').style.display = 'inline-block';
+            }
+            
+            loadNewPrice();
+            // 綁定按鈕事件
+            document.getElementById('nextBtn').addEventListener('click', loadNewPrice);
+        }
+        
+        // iOS權限處理
+        function handleIOSPermission() {
+            const permissionDiv = document.getElementById('iosPermission');
+            permissionDiv.style.display = 'block';
+            
+            document.getElementById('enableMicBtn').addEventListener('click', async function() {
+                try {
+                    // iOS必須先請求媒體權限
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // 立即停止所有音軌（我們只需要權限）
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // 初始化語音識別
+                    initSpeechRecognition();
+                    
+                    // 隱藏提示，顯示開始按鈕
+                    permissionDiv.style.display = 'none';
+                    document.getElementById('startBtn').style.display = 'inline-block';
+                    
+                    // iOS需要用戶交互後才能開始錄音
+                    document.getElementById('startBtn').addEventListener('click', function() {
+                        startRecording();
+                    }, { once: true });
+                    
+                } catch (error) {
+                    alert('請允許麥克風權限！\n如已拒絕，請到設置中手動開啟');
+                }
+            });
+        }
+        
+        // 初始化語音識別
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert('您的瀏覽器不支持語音識別');
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.lang = 'yue-Hant-HK'; // 設置為廣東話
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                document.getElementById('status').textContent = '正在聆聽...請清晰地讀出價錢';
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').textContent = '您讀的內容：' + transcript;
+                document.getElementById('correctAnswer').textContent = '正確答案：' + expectedText;
+                
+                // 比對結果
+                if (cleanText(transcript) === cleanText(expectedText)) {
+                    document.getElementById('status').innerHTML = '<span style="color:green">✓ 讀取正確！</span>';
+                } else {
+                    document.getElementById('status').innerHTML = '<span style="color:red">✗ 讀取不正確</span>';
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                if (event.error === 'not-allowed' && isIOS) {
+                    document.getElementById('iosPermission').style.display = 'block';
+                }
+                document.getElementById('status').textContent = '錯誤: ' + event.error;
+            };
+        }
+        
+        // 開始錄音
+        function startRecording() {
+            try {
+                recognition.start();
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('userInput').textContent = '您讀的內容：聽取中...';
+                document.getElementById('correctAnswer').textContent = '正確答案：--';
+            } catch (error) {
+                document.getElementById('status').textContent = '啟動失敗: ' + error.message;
+            }
+        }
+        
+        // 載入新價格
+        function loadNewPrice() {
+            // 生成隨機價格 (1.0 - 999.9)
+            currentPrice = (Math.random() * 999 + 1).toFixed(1);
+            document.getElementById('priceCard').textContent = '$' + currentPrice;
+            
+            // 重置顯示
+            document.getElementById('userInput').textContent = '您讀的內容：--';
+            document.getElementById('correctAnswer').textContent = '正確答案：--';
+            document.getElementById('status').textContent = '請點擊「開始聽取」讀出價錢';
+            
+            // 生成預期讀法
+            expectedText = convertToChinese(currentPrice);
+            
+            // 重置按鈕狀態
+            if (document.getElementById('startBtn').style.display !== 'none') {
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+        
+        // 價格轉中文讀法
+        function convertToChinese(price) {
+            const parts = price.split('.');
+            const dollars = parseInt(parts[0]);
+            const cents = parseInt(parts[1]) || 0;
+            
+            let result = numberToChinese(dollars) + '元';
+            if (cents > 0) result += numberToChinese(cents) + '角';
+            return result;
+        }
+        
+        // 數字轉中文
+        function numberToChinese(num) {
+            const digits = ['零','一','二','三','四','五','六','七','八','九'];
+            const units = ['','十','百','千'];
+            
+            if (num === 0) return digits[0];
+            
+            let result = '';
+            let position = 0;
+            
+            while (num > 0) {
+                const digit = num % 10;
+                if (digit !== 0) {
+                    result = digits[digit] + units[position] + result;
+                }
+                num = Math.floor(num / 10);
+                position++;
+            }
+            
+            return result.replace(/^一十/, '十');
+        }
+        
+        // 清理文本比對
+        function cleanText(text) {
+            return text.toLowerCase()
+                .replace(/[.,\s]/g, '')
+                .replace(/蚊/g, '元')
+                .replace(/毫子?/g, '角');
+        }
+        
+        // 啟動遊戲
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
