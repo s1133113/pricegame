@@ -87,11 +87,6 @@
             background: #4caf50;
             margin: 10px auto;
         }
-        #ios-help {
-            font-size: 3.5vw;
-            color: #9e9e9e;
-            margin-top: 20px;
-        }
         
         @media (min-width: 768px) {
             #priceCard { font-size: 120px; padding: 30px; }
@@ -101,7 +96,6 @@
             #score { font-size: 28px; }
             .label { font-size: 24px; }
             .permission-panel { font-size: 18px; }
-            #ios-help { font-size: 16px; }
         }
     </style>
 </head>
@@ -113,14 +107,14 @@
         <h3>⚠️ 需要麥克風權限</h3>
         <p>請點擊下方按鈕允許使用麥克風：</p>
         <button id="enableMicBtn">啟用麥克風</button>
-        <p id="ios-help"><small>iOS用戶：請在彈出窗口中點擊「允許」，然後再次點擊「開始聽取」按鈕</small></p>
+        <p><small>iOS用戶：請在彈出窗口中點擊「允許」</small></p>
     </div>
     
     <div id="score">分數: 0 / 0</div>
     
     <div id="priceCard">$1234.50</div>
     
-    <button id="startBtn">開始聽取</button>
+    <button id="startBtn" style="display:none;">開始聽取</button>
     <button id="nextBtn">下一張</button>
     
     <div id="status">準備開始...</div>
@@ -134,7 +128,6 @@
     <script>
         // 設備檢測
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         
         // 語音識別
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -144,7 +137,6 @@
         let total = 0;
         let expectedFull = '';
         let isRecording = false;
-        let permissionGranted = false;
 
         // DOM元素
         const startBtn = document.getElementById('startBtn');
@@ -161,23 +153,20 @@
         function initGame() {
             if (!SpeechRecognition) {
                 status.textContent = '您的瀏覽器不支持語音識別';
-                startBtn.style.display = 'none';
                 return;
             }
             
             loadNewPrice();
             
-            if (isIOS || isSafari) {
-                // iOS/Safari需要特殊處理
+            if (isIOS) {
                 showIOSPermissionPanel();
             } else {
-                // 其他瀏覽器直接初始化
                 initSpeechRecognition();
+                startBtn.style.display = 'inline-block';
             }
             
             // 綁定按鈕事件
             nextBtn.onclick = loadNewPrice;
-            startBtn.onclick = handleStartRecording;
         }
 
         // 顯示iOS權限面板
@@ -190,42 +179,28 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     stream.getTracks().forEach(track => track.stop());
                     
-                    permissionGranted = true;
+                    // 初始化語音識別
                     initSpeechRecognition();
                     
-                    // 隱藏權限面板
+                    // 顯示開始按鈕
                     permissionPanel.style.display = 'none';
-                    status.textContent = '麥克風權限已獲取，請點擊「開始聽取」';
+                    startBtn.style.display = 'inline-block';
                 } catch (error) {
                     status.textContent = '麥克風權限被拒絕，請刷新頁面重試';
-                    enableMicBtn.textContent = '權限被拒，點擊重試';
                 }
             };
-        }
-
-        // 處理開始錄音
-        function handleStartRecording() {
-            if (isRecording) return;
-            
-            if (isIOS && !permissionGranted) {
-                showIOSPermissionPanel();
-                return;
-            }
-            
-            startRecording();
         }
 
         // 初始化語音識別
         function initSpeechRecognition() {
             recognition = new SpeechRecognition();
-            recognition.lang = 'zh-HK'; // 使用zh-HK而不是yue-Hant-HK，兼容性更好
+            recognition.lang = 'yue-Hant-HK';
             recognition.continuous = false;
             recognition.interimResults = false;
             
-            recognition.onstart', () => {
+            recognition.onstart = () => {
                 isRecording = true;
                 status.textContent = '聽緊中... 請讀出價錢！';
-                startBtn.disabled = true;
             };
             
             recognition.onresult = (event) => {
@@ -250,12 +225,10 @@
                 
                 updateScore();
                 isRecording = false;
-                startBtn.disabled = false;
             };
             
             recognition.onerror = (event) => {
                 isRecording = false;
-                startBtn.disabled = false;
                 handleRecognitionError(event.error);
             };
             
@@ -263,22 +236,23 @@
                 if (isRecording) {
                     isRecording = false;
                     startBtn.disabled = false;
-                    status.textContent = '未能識別，請再試一次';
                 }
+            };
+            
+            startBtn.onclick = () => {
+                if (isRecording) return;
+                startRecording();
             };
         }
 
         // 開始錄音
         function startRecording() {
             try {
+                recognition.start();
+                startBtn.disabled = true;
                 userInput.textContent = '聽緊...';
                 correctAnswer.style.display = 'none';
                 status.textContent = '聽緊中... 請讀出價錢！';
-                
-                // iOS需要延遲一小會兒才能開始識別
-                setTimeout(() => {
-                    recognition.start();
-                }, 300);
             } catch (error) {
                 status.textContent = '啟動失敗: ' + error.message;
                 startBtn.disabled = false;
@@ -293,6 +267,7 @@
                 case 'service-not-allowed':
                     if (isIOS) {
                         permissionPanel.style.display = 'block';
+                        startBtn.style.display = 'none';
                         message = '請允許麥克風權限';
                     } else {
                         message = '請允許麥克風權限';
@@ -301,16 +276,11 @@
                 case 'no-speech':
                     message = '未檢測到語音，請重試';
                     break;
-                case 'audio-capture':
-                    message = '無法捕獲音頻，請檢查麥克風';
-                    break;
-                case 'network':
-                    message = '網絡錯誤，請檢查連接';
-                    break;
                 default:
                     message = '錯誤: ' + error;
             }
             status.textContent = message;
+            startBtn.disabled = false;
         }
 
         // 載入新價格
@@ -323,7 +293,10 @@
             correctAnswer.style.display = 'none';
             status.textContent = '新價錢牌準備好！';
             status.className = '';
-            startBtn.disabled = false;
+            
+            if (startBtn.style.display !== 'none') {
+                startBtn.disabled = false;
+            }
         }
 
         // 生成隨機價格
