@@ -12,68 +12,77 @@
             padding: 20px; 
             -webkit-touch-callout: none;
             -webkit-user-select: none;
+            touch-action: manipulation;
         }
         #priceCard { 
-            font-size: 80px; 
+            font-size: 24px; /* 改為動態調整 */
             font-weight: bold; 
             color: #d32f2f; 
-            margin: 30px 0; 
+            margin: 20px auto; 
             background: white; 
-            padding: 20px; 
+            padding: 15px; 
             border: 5px solid #333; 
-            border-radius: 20px; 
-            display: inline-block; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             width: 90%; 
-            max-width: 400px; 
+            max-width: 400px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         #userInput { 
-            font-size: 32px; 
+            font-size: 24px; 
             color: #388e3c; 
             margin: 10px 0; 
             min-height: 40px; 
             font-weight: bold; 
+            padding: 5px;
         }
         #correctAnswer { 
-            font-size: 32px; 
+            font-size: 24px; 
             color: #1976d2; 
             margin: 10px 0; 
             display: none; 
             font-weight: bold; 
+            padding: 5px;
         }
         button { 
-            font-size: 20px; 
-            padding: 15px 25px; 
-            margin: 10px; 
+            font-size: 18px; 
+            padding: 12px 20px; 
+            margin: 8px; 
             background: #007aff; 
             color: white; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 10px; 
             cursor: pointer; 
             -webkit-tap-highlight-color: transparent;
         }
         button:active { 
             background: #0056b3; 
+            transform: scale(0.98);
         }
         button:disabled { 
             background: #ccc; 
         }
         #status { 
-            font-size: 18px; 
+            font-size: 16px; 
             color: #757575; 
-            margin: 15px 0; 
-            height: 24px; 
+            margin: 12px 0; 
+            height: 20px; 
         }
         #score { 
-            font-size: 24px; 
+            font-size: 20px; 
             color: #ff9800; 
             font-weight: bold; 
-            margin: 10px 0; 
+            margin: 8px 0; 
         }
         .label { 
-            font-size: 18px; 
+            font-size: 16px; 
             color: #666; 
-            margin-top: 15px; 
+            margin-top: 12px; 
         }
         .correct { 
             color: #388e3c !important; 
@@ -87,6 +96,7 @@
             padding: 10px;
             border-radius: 8px;
             margin: 10px 0;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -95,7 +105,7 @@
     <div id="iosWarning">請確保允許此網站使用麥克風權限</div>
     <div id="score">分數: 0 / 0</div>
     
-    <div id="priceCard">$0.00</div>
+    <div id="priceCard">準備中...</div>
     
     <div>
         <button id="startBtn">開始聽取</button>
@@ -139,6 +149,18 @@
         const scoreDiv = document.getElementById('score');
         const correctAnswer = document.getElementById('correctAnswer');
         const iosWarning = document.getElementById('iosWarning');
+
+        // 根據數字長度調整字體大小
+        function adjustFontSize(priceStr) {
+            const length = priceStr.length;
+            let size = 24; // 基礎字體
+            
+            if (length > 10) size = 18;
+            else if (length > 8) size = 20;
+            else if (length > 6) size = 22;
+            
+            priceCard.style.fontSize = `${size}px`;
+        }
 
         // iOS 必須透過 click 事件啟動
         startBtn.addEventListener('click', () => {
@@ -245,7 +267,8 @@
 
         function convertNumberToChinese(text) {
             // 移除標點符號，並將阿拉伯數字轉化
-            return text.replace(/\d+/g, (m) => numberToChinese(parseInt(m)));
+            return text.replace(/\d+/g, (m) => numberToChinese(parseInt(m)))
+                      .replace(/點/g, '.'); // 保留小數點
         }
 
         function cleanTranscript(text) {
@@ -253,6 +276,7 @@
                        .replace(/蚊/g, '元')
                        .replace(/個/g, '元')
                        .replace(/毫子?/g, '角')
+                       .replace(/點/g, '.')
                        .replace(/壹/g, '一').replace(/貳/g, '二'); // 防止出現大寫數字
         }
 
@@ -269,7 +293,10 @@
             currentPrice = dollars + (tenths * 0.1);
             
             expectedFull = getExpectedPrice(currentPrice);
-            priceCard.textContent = '$' + currentPrice.toFixed(2);
+            const displayPrice = '$' + currentPrice.toFixed(2);
+            priceCard.textContent = displayPrice;
+            adjustFontSize(displayPrice);
+            
             userInput.textContent = '---';
             correctAnswer.style.display = 'none';
             status.textContent = '新題目已就緒';
