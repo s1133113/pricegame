@@ -3,106 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iOS 價錢牌讀取遊戲</title>
+    <title>價錢牌讀取遊戲</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            text-align: center; 
-            background: #f0f8ff; 
-            padding: 20px; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            text-align: center;
+            background: #f0f8ff;
+            padding: 20px;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             touch-action: manipulation;
         }
-        #priceCard { 
-            font-size: 36px; /* 基礎字體大小 */
-            font-weight: bold; 
-            color: #d32f2f; 
-            margin: 20px auto; 
-            background: white; 
-            padding: 25px 15px; 
-            border: 5px solid #333; 
-            border-radius: 15px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-            width: 90%; 
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        #priceCard {
+            font-size: 42px; /* 默认大字体 */
+            font-weight: bold;
+            color: #d32f2f;
+            margin: 20px auto;
+            background: white;
+            padding: 25px 15px;
+            border: 5px solid #333;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 90%;
             max-width: 500px;
-            min-height: 150px;
+            min-height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
             word-break: break-word;
             overflow-wrap: break-word;
         }
+        /* 电脑端更大的字体 */
         @media (min-width: 768px) {
             #priceCard {
-                font-size: 48px; /* 電腦上更大的字體 */
-                min-height: 180px;
+                font-size: 60px;
+                min-height: 150px;
             }
         }
-        #userInput { 
-            font-size: 28px; 
-            color: #388e3c; 
-            margin: 10px 0; 
-            min-height: 50px; 
-            font-weight: bold; 
-            padding: 5px;
+        /* 手机横屏适配 */
+        @media (max-width: 767px) and (orientation: landscape) {
+            #priceCard {
+                font-size: 36px;
+                min-height: 100px;
+            }
         }
-        #correctAnswer { 
-            font-size: 28px; 
-            color: #1976d2; 
-            margin: 10px 0; 
-            display: none; 
-            font-weight: bold; 
-            padding: 5px;
+        #userInput {
+            font-size: 32px;
+            color: #388e3c;
+            margin: 15px 0;
+            min-height: 50px;
+            font-weight: bold;
+            padding: 10px;
         }
-        button { 
-            font-size: 20px; 
-            padding: 15px 25px; 
-            margin: 10px; 
-            background: #007aff; 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer; 
+        #correctAnswer {
+            font-size: 32px;
+            color: #1976d2;
+            margin: 15px 0;
+            display: none;
+            font-weight: bold;
+            padding: 10px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        button {
+            font-size: 22px;
+            padding: 15px 30px;
+            margin: 10px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            min-width: 150px;
         }
-        button:active { 
-            background: #0056b3; 
+        button:active {
+            background: #0056b3;
             transform: scale(0.98);
         }
-        button:disabled { 
-            background: #ccc; 
+        button:disabled {
+            background: #ccc;
         }
-        #status { 
-            font-size: 18px; 
-            color: #757575; 
-            margin: 15px 0; 
-            height: 24px; 
+        #status {
+            font-size: 20px;
+            color: #757575;
+            margin: 20px 0;
+            min-height: 30px;
         }
-        #score { 
-            font-size: 24px; 
-            color: #ff9800; 
-            font-weight: bold; 
-            margin: 10px 0; 
+        #score {
+            font-size: 26px;
+            color: #ff9800;
+            font-weight: bold;
+            margin: 15px 0;
         }
-        .label { 
-            font-size: 18px; 
-            color: #666; 
-            margin-top: 15px; 
+        .label {
+            font-size: 20px;
+            color: #666;
+            margin-top: 20px;
+            font-weight: bold;
         }
-        .correct { 
-            color: #388e3c !important; 
+        .correct {
+            color: #388e3c !important;
         }
-        .incorrect { 
-            color: #d32f2f !important; 
+        .incorrect {
+            color: #d32f2f !important;
         }
         #iosWarning {
             display: none;
             background: #fff3cd;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 16px;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -113,7 +133,7 @@
     
     <div id="priceCard">準備中...</div>
     
-    <div>
+    <div class="button-container">
         <button id="startBtn">開始聽取</button>
         <button id="nextBtn">下一張</button>
     </div>
@@ -127,7 +147,6 @@
     <div id="correctAnswer"></div>
 
     <script>
-        // 兼容性處理
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
@@ -137,7 +156,7 @@
         }
 
         const recognition = new SpeechRecognition();
-        recognition.lang = 'zh-HK'; // iOS 對 yue-Hant-HK 支援度不一，zh-HK 最穩
+        recognition.lang = 'zh-HK';
         recognition.continuous = false;
         recognition.interimResults = false;
 
@@ -147,76 +166,79 @@
         let expectedFull = '';
         let isListening = false;
 
-        const startBtn = document.getElementById('startBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const status = document.getElementById('status');
-        const userInput = document.getElementById('userInput');
-        const priceCard = document.getElementById('priceCard');
-        const scoreDiv = document.getElementById('score');
-        const correctAnswer = document.getElementById('correctAnswer');
-        const iosWarning = document.getElementById('iosWarning');
+        const elements = {
+            startBtn: document.getElementById('startBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            status: document.getElementById('status'),
+            userInput: document.getElementById('userInput'),
+            priceCard: document.getElementById('priceCard'),
+            scoreDiv: document.getElementById('score'),
+            correctAnswer: document.getElementById('correctAnswer'),
+            iosWarning: document.getElementById('iosWarning')
+        };
 
-        // 根據數字長度調整字體大小
-        function adjustFontSize(priceStr) {
-            const length = priceStr.length;
-            let size = 36; // 基礎字體
+        function adjustFontSize(text) {
+            const length = text.length;
+            let size = 42; // 手机默认
             
-            if (length > 12) size = 28;
-            else if (length > 10) size = 30;
-            else if (length > 8) size = 32;
-            
-            // 電腦上更大
-            if (window.innerWidth > 768) {
+            if (window.innerWidth > 768) { // 电脑
+                size = 60;
+                if (length > 12) size = 50;
+                else if (length > 10) size = 54;
+                else if (length > 8) size = 58;
+            } else { // 手机
                 if (length > 12) size = 36;
-                else if (length > 10) size = 40;
-                else if (length > 8) size = 44;
-                else size = 48;
+                else if (length > 10) size = 38;
+                else if (length > 8) size = 40;
             }
             
-            priceCard.style.fontSize = `${size}px`;
+            // 横屏调整
+            if (window.innerWidth < 768 && window.innerHeight < window.innerWidth) {
+                size = Math.max(32, size - 8);
+            }
+            
+            elements.priceCard.style.fontSize = `${size}px`;
         }
 
-        // iOS 必須透過 click 事件啟動
-        startBtn.addEventListener('click', () => {
+        elements.startBtn.addEventListener('click', () => {
             if (isListening) return;
             
             try {
                 recognition.start();
                 isListening = true;
-                status.textContent = '正在聽取...請說話';
-                status.className = '';
-                startBtn.disabled = true;
-                userInput.textContent = '聽緊你講嘢...';
-                correctAnswer.style.display = 'none';
-                iosWarning.style.display = 'none';
+                elements.status.textContent = '正在聽取...請說話';
+                elements.status.className = '';
+                elements.startBtn.disabled = true;
+                elements.userInput.textContent = '聽緊你講嘢...';
+                elements.correctAnswer.style.display = 'none';
+                elements.iosWarning.style.display = 'none';
             } catch (e) {
-                status.textContent = '啟動失敗，請重試';
-                startBtn.disabled = false;
+                elements.status.textContent = '啟動失敗，請重試';
+                elements.startBtn.disabled = false;
                 isListening = false;
-                iosWarning.style.display = 'block';
+                elements.iosWarning.style.display = 'block';
             }
         });
 
         recognition.onresult = (event) => {
             isListening = false;
             const rawTranscript = event.results[0][0].transcript;
-            // 處理 iOS 可能回傳阿拉伯數字的情況
             const displayText = convertNumberToChinese(rawTranscript);
             
-            userInput.textContent = displayText;
-            correctAnswer.textContent = expectedFull;
-            correctAnswer.style.display = 'block';
+            elements.userInput.textContent = displayText;
+            elements.correctAnswer.textContent = expectedFull;
+            elements.correctAnswer.style.display = 'block';
             
             const isCorrect = checkCorrect(displayText);
             total++;
             
             if (isCorrect) {
                 score++;
-                status.textContent = '✅ 正確！';
-                status.className = 'correct';
+                elements.status.textContent = '✅ 正確！';
+                elements.status.className = 'correct';
             } else {
-                status.textContent = '❌ 唔正確！';
-                status.className = 'incorrect';
+                elements.status.textContent = '❌ 唔正確！';
+                elements.status.className = 'incorrect';
             }
             updateScore();
         };
@@ -224,28 +246,27 @@
         recognition.onerror = (event) => {
             console.error(event.error);
             isListening = false;
-            startBtn.disabled = false;
+            elements.startBtn.disabled = false;
             
             if (event.error === 'not-allowed') {
-                status.textContent = '麥克風權限被拒絕';
-                iosWarning.style.display = 'block';
+                elements.status.textContent = '麥克風權限被拒絕';
+                elements.iosWarning.style.display = 'block';
             } else if (event.error === 'no-speech') {
-                status.textContent = '沒有檢測到語音';
+                elements.status.textContent = '沒有檢測到語音';
             } else {
-                status.textContent = '錯誤: ' + event.error;
+                elements.status.textContent = '錯誤: ' + event.error;
             }
         };
 
         recognition.onend = () => {
             isListening = false;
-            startBtn.disabled = false;
+            elements.startBtn.disabled = false;
         };
 
-        // 數字轉中文的核心邏輯
         function numberToChinese(num) {
             if (num === 0) return '零';
             const chineseDigits = ['零','一','二','三','四','五','六','七','八','九'];
-            const units = ['','十','百','千'];
+            const units = ['','十','百','千','萬'];
             let numStr = Math.floor(num).toString();
             let result = '';
             let hasZero = false;
@@ -261,8 +282,7 @@
                     hasZero = true;
                 }
             }
-            // 處理口語習慣
-            result = result.replace(/^一十/, '十'); 
+            result = result.replace(/^一十/, '十');
             return result;
         }
 
@@ -271,7 +291,10 @@
             const cents = Math.round((price - dollars) * 10);
             
             let dollarStr = numberToChinese(dollars);
-            if (dollars >= 100 && (dollarStr.startsWith('百') || dollarStr.startsWith('千'))) {
+            if (dollars >= 10000) {
+                dollarStr = numberToChinese(Math.floor(dollars/10000)) + '萬' + 
+                           numberToChinese(dollars%10000);
+            } else if (dollars >= 1000 && dollarStr.startsWith('千')) {
                 dollarStr = '一' + dollarStr;
             }
             
@@ -280,64 +303,66 @@
         }
 
         function convertNumberToChinese(text) {
-            // 移除標點符號，並將阿拉伯數字轉化
-            return text.replace(/\d+/g, (m) => numberToChinese(parseInt(m)))
-                      .replace(/點/g, '元'); // 將"點"轉為"元"
+            return text.replace(/\d+/g, m => numberToChinese(parseInt(m)))
+                      .replace(/點/g, '元')
+                      .replace(/蚊|個/g, '元')
+                      .replace(/毫子?/g, '角');
         }
 
         function cleanTranscript(text) {
             return text.replace(/[.,，。\s]/g, '')
-                       .replace(/蚊/g, '元')
-                       .replace(/個/g, '元')
-                       .replace(/毫子?/g, '角')
-                       .replace(/點/g, '元')
-                       .replace(/壹/g, '一').replace(/貳/g, '二'); // 防止出現大寫數字
+                      .replace(/蚊|個/g, '元')
+                      .replace(/毫子?/g, '角')
+                      .replace(/點/g, '元')
+                      .replace(/壹|貳|叁|肆|伍|陸|柒|捌|玖|拾/g, 
+                              m => ['零','一','二','三','四','五','六','七','八','九','十'][
+                                  '零一二三四五六七八九十'.indexOf(m)]);
         }
 
         function checkCorrect(spoken) {
             const s = cleanTranscript(spoken);
             const e = cleanTranscript(expectedFull);
-            // 容許口語差異
-            return s === e || s === e.replace('元', ''); 
+            return s === e || s === e.replace('元', '');
         }
 
         function loadNewPrice() {
-            const dollars = Math.floor(Math.random() * 9999) + 1;
+            const dollars = Math.floor(Math.random() * 99999) + 1;
             const tenths = Math.floor(Math.random() * 10);
             currentPrice = dollars + (tenths * 0.1);
             
             expectedFull = getExpectedPrice(currentPrice);
-            priceCard.textContent = expectedFull; // 直接顯示中文數字
+            elements.priceCard.textContent = expectedFull;
             adjustFontSize(expectedFull);
             
-            userInput.textContent = '---';
-            correctAnswer.style.display = 'none';
-            status.textContent = '新題目已就緒';
-            status.className = '';
+            elements.userInput.textContent = '---';
+            elements.correctAnswer.style.display = 'none';
+            elements.status.textContent = '新題目已就緒';
+            elements.status.className = '';
         }
 
         function updateScore() {
-            scoreDiv.textContent = `分數: ${score} / ${total}`;
+            elements.scoreDiv.textContent = `分數: ${score} / ${total}`;
         }
 
-        nextBtn.onclick = loadNewPrice;
+        elements.nextBtn.onclick = loadNewPrice;
         
         // 初始加載
         document.addEventListener('DOMContentLoaded', () => {
             loadNewPrice();
             
-            // 檢查權限狀態
             if (navigator.permissions) {
                 navigator.permissions.query({name: 'microphone'}).then(permissionStatus => {
                     permissionStatus.onchange = () => {
-                        if (permissionStatus.state === 'denied') {
-                            iosWarning.style.display = 'block';
-                        } else {
-                            iosWarning.style.display = 'none';
-                        }
+                        elements.iosWarning.style.display = 
+                            permissionStatus.state === 'denied' ? 'block' : 'none';
                     };
                 });
             }
+            
+            // 窗口大小变化时重新调整字体
+            window.addEventListener('resize', () => {
+                adjustFontSize(elements.priceCard.textContent);
+            });
         });
     </script>
 </body>
