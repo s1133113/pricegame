@@ -15,34 +15,40 @@
             touch-action: manipulation;
         }
         #priceCard { 
-            font-size: 24px; /* 改為動態調整 */
+            font-size: 36px; /* 基礎字體大小 */
             font-weight: bold; 
             color: #d32f2f; 
             margin: 20px auto; 
             background: white; 
-            padding: 15px; 
+            padding: 25px 15px; 
             border: 5px solid #333; 
             border-radius: 15px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             width: 90%; 
-            max-width: 400px;
-            min-height: 120px;
+            max-width: 500px;
+            min-height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
             word-break: break-word;
             overflow-wrap: break-word;
         }
+        @media (min-width: 768px) {
+            #priceCard {
+                font-size: 48px; /* 電腦上更大的字體 */
+                min-height: 180px;
+            }
+        }
         #userInput { 
-            font-size: 24px; 
+            font-size: 28px; 
             color: #388e3c; 
             margin: 10px 0; 
-            min-height: 40px; 
+            min-height: 50px; 
             font-weight: bold; 
             padding: 5px;
         }
         #correctAnswer { 
-            font-size: 24px; 
+            font-size: 28px; 
             color: #1976d2; 
             margin: 10px 0; 
             display: none; 
@@ -50,9 +56,9 @@
             padding: 5px;
         }
         button { 
-            font-size: 18px; 
-            padding: 12px 20px; 
-            margin: 8px; 
+            font-size: 20px; 
+            padding: 15px 25px; 
+            margin: 10px; 
             background: #007aff; 
             color: white; 
             border: none; 
@@ -68,21 +74,21 @@
             background: #ccc; 
         }
         #status { 
-            font-size: 16px; 
+            font-size: 18px; 
             color: #757575; 
-            margin: 12px 0; 
-            height: 20px; 
+            margin: 15px 0; 
+            height: 24px; 
         }
         #score { 
-            font-size: 20px; 
+            font-size: 24px; 
             color: #ff9800; 
             font-weight: bold; 
-            margin: 8px 0; 
+            margin: 10px 0; 
         }
         .label { 
-            font-size: 16px; 
+            font-size: 18px; 
             color: #666; 
-            margin-top: 12px; 
+            margin-top: 15px; 
         }
         .correct { 
             color: #388e3c !important; 
@@ -96,7 +102,7 @@
             padding: 10px;
             border-radius: 8px;
             margin: 10px 0;
-            font-size: 14px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -153,11 +159,19 @@
         // 根據數字長度調整字體大小
         function adjustFontSize(priceStr) {
             const length = priceStr.length;
-            let size = 24; // 基礎字體
+            let size = 36; // 基礎字體
             
-            if (length > 10) size = 18;
-            else if (length > 8) size = 20;
-            else if (length > 6) size = 22;
+            if (length > 12) size = 28;
+            else if (length > 10) size = 30;
+            else if (length > 8) size = 32;
+            
+            // 電腦上更大
+            if (window.innerWidth > 768) {
+                if (length > 12) size = 36;
+                else if (length > 10) size = 40;
+                else if (length > 8) size = 44;
+                else size = 48;
+            }
             
             priceCard.style.fontSize = `${size}px`;
         }
@@ -268,7 +282,7 @@
         function convertNumberToChinese(text) {
             // 移除標點符號，並將阿拉伯數字轉化
             return text.replace(/\d+/g, (m) => numberToChinese(parseInt(m)))
-                      .replace(/點/g, '.'); // 保留小數點
+                      .replace(/點/g, '元'); // 將"點"轉為"元"
         }
 
         function cleanTranscript(text) {
@@ -276,14 +290,14 @@
                        .replace(/蚊/g, '元')
                        .replace(/個/g, '元')
                        .replace(/毫子?/g, '角')
-                       .replace(/點/g, '.')
+                       .replace(/點/g, '元')
                        .replace(/壹/g, '一').replace(/貳/g, '二'); // 防止出現大寫數字
         }
 
         function checkCorrect(spoken) {
             const s = cleanTranscript(spoken);
             const e = cleanTranscript(expectedFull);
-            // 容許口語：如果結尾是「元」，但正確答案有「角」且角是0，這部分邏輯已在 getExpectedPrice 處理
+            // 容許口語差異
             return s === e || s === e.replace('元', ''); 
         }
 
@@ -293,9 +307,8 @@
             currentPrice = dollars + (tenths * 0.1);
             
             expectedFull = getExpectedPrice(currentPrice);
-            const displayPrice = '$' + currentPrice.toFixed(2);
-            priceCard.textContent = displayPrice;
-            adjustFontSize(displayPrice);
+            priceCard.textContent = expectedFull; // 直接顯示中文數字
+            adjustFontSize(expectedFull);
             
             userInput.textContent = '---';
             correctAnswer.style.display = 'none';
